@@ -1,53 +1,181 @@
-**Projet : Prédiction de salaire (Machine Learning)**
+# Projet de Machine Learning — Prédiction des Salaires
 
-Ce dépôt contient un script d'entraînement et d'évaluation de modèles de régression pour prédire la variable `Salary` à partir d'un fichier CSV (`Salary_Data.csv`). Le code utilise `scikit-learn` pour le prétraitement, l'entraînement, la recherche d'hyperparamètres et l'évaluation.
+## 1. Contexte et objectif
 
-**1. Objectifs**
-- **But**: comparer deux approches de régression (Régression Linéaire et Arbre de Décision) pour prédire les salaires.
-- **Objectifs pédagogiques/pratiques**: démontrer une chaîne complète ML — chargement des données, preprocessing, entraînement, validation croisée, recherche d'hyperparamètres, évaluation, visualisation et sauvegarde des modèles.
+Ce projet a pour objectif de **prédire le salaire d’un individu** à partir de caractéristiques socio‑professionnelles (âge, expérience, niveau d’éducation, poste occupé, genre, etc.) en utilisant des **modèles de régression supervisée**.
 
-**2. Comment lancer le projet**
-- **Pré-requis**: Python 3.8+ et `pip`.
-- **Installer dans un environnement virtuel (PowerShell)**:
-```
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
+Deux modèles ont été étudiés et comparés :
 
-- **Lancer le script**:
-```
-python main.py
-```
+* une **Régression Linéaire**, utilisée comme modèle de base (baseline),
+* un **Arbre de Décision (Decision Tree Regressor)**, optimisé par validation croisée.
 
+L’objectif final est de **sélectionner le modèle offrant le meilleur compromis entre précision, généralisation et interprétabilité**.
 
-**3. Sections (`main.py`)**
-Le script est organisé en 10 blocs numérotés (0 à 9) — ci‑dessous le rôle de chaque bloc :
-- **0. Chargement du fichier**: lecture du CSV (`pd.read_csv`) et gestion basique d'erreur si le fichier est introuvable. 
-- **1. Cible & colonnes**: vérification que la colonne cible `Salary` existe ; séparation `X` / `y` ; détection automatique des colonnes numériques et catégorielles.
-- **2. Train/Test split**: séparation des données en ensembles d'entraînement et de test.
-- **3. Preprocessing pipeline**: construction d'un `ColumnTransformer` qui applique aux colonnes numériques un `SimpleImputer(strategy='median')` puis `StandardScaler`, et aux colonnes catégorielles un `SimpleImputer(strategy='most_frequent')` puis `OneHotEncoder(handle_unknown='ignore')`.
-- **4. Pipelines modèles**: deux `Pipeline` complets (préproc + modèle) : `pipe_lr` pour `LinearRegression` et `pipe_dt` pour `DecisionTreeRegressor`.
-- **5. Entraînement & CV (pour DT)**: évaluation cross‑validée (`cross_val_score`) pour la régression linéaire ; `GridSearchCV` sur l'arbre pour optimiser `max_depth` et `min_samples_leaf`.
-- **6. Évaluation (train + test)**: calcul des métriques (MSE, RMSE, MAE, R2) sur test et train pour détecter overfitting / surapprentissage.
-- **7. Graphiques**: `y_test` vs `y_pred` pour les deux modèles avec la droite identité (réel = prédit) pour visualiser la qualité des prédictions.
-- **8. Interprétabilité**: extraction des noms de features après préprocessing ; affichage des coefficients pour la LR et des importances pour le DT.
-- **9. Sauvegarde des modèles**: `joblib.dump` pour écrire `model_linear.joblib` et `model_dt_best.joblib` sur disque.
+---
 
-**4. Métriques utilisées — explication et importance**
-- **MSE (Mean Squared Error)**: moyenne des carrés des erreurs ( (y_true - y_pred)^2 ). Pénalise fortement les grandes erreurs ; unité au carré de la variable cible.
-- **RMSE (Root Mean Squared Error)**: racine carrée du MSE. Même sensibilité que MSE mais en unité comparable à la variable cible.
-- **MAE (Mean Absolute Error)**: moyenne des valeurs absolues des erreurs. Moins sensible que MSE/RMSE.
-- **R2 (Coefficient de détermination)**: proportion de la variance expliquée par le modèle (1 = parfait, 0 = modèle qui prédit la moyenne). Utile pour comparer la capacité explicative d'un modèle, mais sensible aux caractéristiques des données.
+## 2. Jeu de données
 
-Pourquoi ces métriques :
-- **Comparaison complète**: MSE/RMSE pour pénaliser grosses erreurs, MAE pour robustesse aux outliers, R2 pour une métrique normalisée (0..1 souvent) qui donne une idée globale de la qualité.
-- **Choix selon besoin métier**: si grosses erreurs sont critiques (par ex. erreurs de salaire élevées) privilégier RMSE/MSE ; si on veut une vision plus robuste, regarder MAE.
+* **Taille** : 6 705 observations
+* **Variable cible** : `Salary`
+* **Variables explicatives** :
 
-**5. Graphes proposés (LR et DT) — explication et importance**
-- **Scatter plot Réel vs Prédit**: chaque point est (y_true, y_pred). La ligne identité (`y_true = y_pred`) sert de référence :
-  - points proches de la ligne indiquent de bonnes prédictions ;
-  - écart vertical montre l'erreur ;
-  - dispersion systématique (biais) révèle sous/surestimation selon régions du target.
-- **Pourquoi utile**: permet de détecter patterns d'erreur (hétéroscédasticité, biais systématique, outliers mal prédits) qu'une seule métrique ne montre pas.
+  * Âge (`Age`)
+  * Années d’expérience (`Years of Experience`)
+  * Genre (`Gender`)
+  * Niveau d’éducation (`Education Level`)
+  * Intitulé du poste (`Job Title`)
+
+Les variables catégorielles ont été transformées à l’aide du **One‑Hot Encoding**.
+
+---
+
+## 3. Prétraitement des données
+
+Les étapes de prétraitement incluent :
+
+1. **Nettoyage**
+
+   * Suppression des lignes contenant des valeurs manquantes.
+
+2. **Encodage des variables catégorielles**
+
+   * Utilisation de `pandas.get_dummies()` avec `drop_first=True` afin d’éviter la colinéarité.
+   * Les coefficients sont donc interprétés **par rapport à une catégorie de référence implicite**.
+
+3. **Séparation des données**
+
+   * 80 % pour l’entraînement
+   * 20 % pour le test
+
+4. **Normalisation**
+
+   * Standardisation des variables numériques avec `StandardScaler`.
+
+---
+
+## 4. Modèles utilisés
+
+### 4.1 Régression Linéaire
+
+La régression linéaire sert de **modèle de référence**. Elle suppose une relation linéaire entre les variables explicatives et le salaire.
+
+Avantages :
+
+* Simplicité
+* Forte interprétabilité
+
+Limites :
+
+* Incapacité à modéliser des relations non linéaires complexes
+
+---
+
+### 4.2 Arbre de Décision (Decision Tree Regressor)
+
+L’arbre de décision permet de capturer des **relations non linéaires** en découpant l’espace des données en régions homogènes.
+
+Afin d’éviter le sur‑apprentissage, une **validation croisée avec GridSearchCV** a été utilisée pour optimiser les hyperparamètres.
+
+#### Grille d’hyperparamètres testée :
+
+* `max_depth` ∈ {3, 5, 7, 9}
+* `min_samples_leaf` ∈ {5, 10, 20}
+
+Meilleure combinaison trouvée :
+
+* `max_depth = 9`
+* `min_samples_leaf = 5`
+
+Cette combinaison offre un **bon équilibre entre complexité et généralisation**.
+
+---
+
+## 5. Métriques d’évaluation
+
+Les modèles ont été évalués à l’aide des métriques suivantes :
+
+* **MSE (Mean Squared Error)** : pénalise fortement les grandes erreurs
+* **RMSE (Root Mean Squared Error)** : erreur moyenne exprimée dans l’unité du salaire
+* **MAE (Mean Absolute Error)** : erreur moyenne absolue
+* **R² (Coefficient de détermination)** : proportion de variance expliquée par le modèle
+
+---
+
+## 6. Résultats
+
+### 6.1 Validation croisée
+
+* **Régression Linéaire** :
+
+  * CV MSE ≈ 338 894 089
+
+* **Decision Tree (optimisé)** :
+
+  * Best CV MSE ≈ 178 947 647
+
+➡️ L’arbre de décision est nettement supérieur dès la phase de validation.
+
+---
+
+### 6.2 Performances sur le jeu de test
+
+| Modèle              | RMSE     | MAE      | R²    |
+| ------------------- | -------- | -------- | ----- |
+| Régression Linéaire | ≈ 18 911 | ≈ 13 266 | 0.875 |
+| Decision Tree       | ≈ 12 887 | ≈ 8 327  | 0.942 |
+
+➡️ Le Decision Tree offre une **meilleure précision sur toutes les métriques**.
+
+---
+
+### 6.3 Comparaison entraînement vs test
+
+Les écarts entre les performances d’entraînement et de test sont faibles pour les deux modèles, indiquant **l’absence de sur‑apprentissage significatif**, en particulier pour l’arbre régularisé.
+
+---
+
+## 7. Interprétabilité des modèles
+
+### Régression Linéaire
+
+* Les coefficients indiquent l’impact moyen de chaque variable sur le salaire.
+* Les postes de direction (CTO, CDO, Directeur Data) présentent des effets positifs importants.
+* Les postes juniors ou administratifs ont des effets négatifs.
+
+### Arbre de Décision
+
+* La variable la plus importante est **l’expérience professionnelle**, représentant plus de 75 % du pouvoir décisionnel.
+* Le poste et le niveau d’éducation jouent un rôle secondaire.
+
+Les deux modèles convergent vers une **hiérarchie salariale cohérente avec la réalité économique**.
+
+---
+
+## 8. Visualisation et diagnostic
+
+* Les graphes *réel vs prédit* montrent un alignement plus serré pour l’arbre que pour la régression.
+* Les graphes de résidus révèlent une **hétéroscédasticité** pour la régression linéaire, expliquant ses limites sur les hauts salaires.
+
+---
+
+## 9. Sauvegarde et réutilisation du modèle
+
+Le modèle final est sauvegardé au format `joblib`, permettant :
+
+* une réutilisation sans ré‑entraînement,
+* un déploiement dans une application,
+* une meilleure reproductibilité.
+
+---
+
+## 10. Conclusion
+
+Ce projet montre que :
+
+* la **régression linéaire** constitue une base solide mais limitée,
+* l’**arbre de décision optimisé** offre une amélioration significative en précision,
+* la validation croisée et la régularisation sont essentielles pour éviter le sur‑apprentissage.
+
+➡️ **Le Decision Tree optimisé est retenu comme modèle final pour la prédiction des salaires.**
+
+---

@@ -69,7 +69,7 @@ categorical_transformer = Pipeline(steps=[
 preprocessor = ColumnTransformer(transformers=[
     ('num', numeric_transformer, numeric_features),
     ('cat', categorical_transformer, categorical_features)
-], remainder='drop')  # drop autres colonnes inconnues
+], remainder='drop')  
 
 
 # 4. Pipelines modèles
@@ -91,7 +91,7 @@ pipe_dt = Pipeline(steps=[
 
 # Linear Regression - cross-validated score (MSE)
 cv_scores_lr = cross_val_score(pipe_lr, X_train, y_train, cv=5, scoring='neg_mean_squared_error')
-print(f"\nCV MSE (LinearRegression) mean: {-np.mean(cv_scores_lr):.3f} (std: {np.std(cv_scores_lr):.3f})")
+# print(f"\nCV MSE (LinearRegression) mean: {-np.mean(cv_scores_lr):.3f} (std: {np.std(cv_scores_lr):.3f})")
 
 # GridSearch pour Decision Tree (trouver max_depth et min_samples_leaf)
 param_grid = {
@@ -149,6 +149,26 @@ plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2
 plt.xlabel("Valeurs réelles")
 plt.ylabel("Prédictions (DT)")
 plt.title("DT : Réel vs Prédit")
+plt.show()
+
+# Résidus (exemple pour LR)
+residuals = y_test - y_pred_lr
+plt.figure(figsize=(6,4))
+plt.scatter(y_pred_lr, residuals, alpha=0.7)
+plt.hlines(0, xmin=y_pred_lr.min(), xmax=y_pred_lr.max(), linestyles='dashed')
+plt.xlabel("Prédictions (LR)")
+plt.ylabel("Résidus (y_true - y_pred)")
+plt.title("LR : résidus vs prédictions")
+plt.show()
+
+# Résidus (exemple pour DT)
+residuals = y_test - y_pred_dt
+plt.figure(figsize=(6,4))
+plt.scatter(y_pred_lr, residuals, alpha=0.7)
+plt.hlines(0, xmin=y_pred_lr.min(), xmax=y_pred_lr.max(), linestyles='dashed')
+plt.xlabel("Prédictions (LR)")
+plt.ylabel("Résidus (y_true - y_pred)")
+plt.title("LR : résidus vs prédictions")
 plt.show()
 
 
