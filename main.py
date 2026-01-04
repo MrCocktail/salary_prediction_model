@@ -24,7 +24,6 @@ except FileNotFoundError:
 # print("\nPremières lignes :")
 # print(df.head())
 
-df = df.dropna()
 
 
 # 1. Cible & colonnes
@@ -33,15 +32,19 @@ target = 'Salary'
 if target not in df.columns:
     raise ValueError(f"La colonne cible '{target}' n'existe pas dans le dataset. Colonnes disponibles : {df.columns.tolist()}")
 
+df = df.dropna(subset=[target])  
 # Séparer le target des features
 X = df.drop(columns=[target])
 y = df[target]
+print(df.shape)
+print(df.tail(10))
+print(df.isnull().sum())
 
 # Détecter automatiquement les colonnes numériques et catégorielles
 numeric_features = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
 categorical_features = X.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
 
-# print(f"\nFeatures numériques ({len(numeric_features)}): {numeric_features}")
+print(f"\nFeatures numériques ({len(numeric_features)}): {numeric_features}")
 # print(f"Features catégorielles ({len(categorical_features)}): {categorical_features}")
 
 
@@ -136,7 +139,7 @@ print("Decision Tree (train):", regression_metrics(y_train, y_train_pred_dt))
 # 7. Graphiques pour visualiser nos modèles
 
 plt.figure(figsize=(6,5))
-plt.scatter(y_test, y_pred_lr, alpha=0.7)
+plt.scatter(y_test, y_pred_lr, alpha=0.7, color='blue')
 plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
 plt.xlabel("Valeurs réelles")
 plt.ylabel("Prédictions (LR)")
@@ -144,7 +147,7 @@ plt.title("LR : Réel vs Prédit")
 plt.show()
 
 plt.figure(figsize=(6,5))
-plt.scatter(y_test, y_pred_dt, alpha=0.7)
+plt.scatter(y_test, y_pred_dt, alpha=0.7, color='green')
 plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
 plt.xlabel("Valeurs réelles")
 plt.ylabel("Prédictions (DT)")
@@ -154,7 +157,7 @@ plt.show()
 # Résidus (exemple pour LR)
 residuals = y_test - y_pred_lr
 plt.figure(figsize=(6,4))
-plt.scatter(y_pred_lr, residuals, alpha=0.7)
+plt.scatter(y_pred_lr, residuals, alpha=0.7, color='purple')
 plt.hlines(0, xmin=y_pred_lr.min(), xmax=y_pred_lr.max(), linestyles='dashed')
 plt.xlabel("Prédictions (LR)")
 plt.ylabel("Résidus (y_true - y_pred)")
@@ -164,11 +167,11 @@ plt.show()
 # Résidus (exemple pour DT)
 residuals = y_test - y_pred_dt
 plt.figure(figsize=(6,4))
-plt.scatter(y_pred_lr, residuals, alpha=0.7)
-plt.hlines(0, xmin=y_pred_lr.min(), xmax=y_pred_lr.max(), linestyles='dashed')
-plt.xlabel("Prédictions (LR)")
+plt.scatter(y_pred_dt, residuals, alpha=0.7, color='orange')
+plt.hlines(0, xmin=y_pred_dt.min(), xmax=y_pred_dt.max(), linestyles='dashed')
+plt.xlabel("Prédictions (DT)")
 plt.ylabel("Résidus (y_true - y_pred)")
-plt.title("LR : résidus vs prédictions")
+plt.title("DT : résidus vs prédictions")
 plt.show()
 
 

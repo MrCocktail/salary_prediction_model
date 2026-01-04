@@ -19,11 +19,11 @@ L’objectif final est de **sélectionner le modèle offrant le meilleur comprom
 * **Variable cible** : `Salary`
 * **Variables explicatives** :
 
-  * Âge (`Age`)
-  * Années d’expérience (`Years of Experience`)
-  * Genre (`Gender`)
-  * Niveau d’éducation (`Education Level`)
-  * Intitulé du poste (`Job Title`)
+  * Âge 
+  * Années d’expérience 
+  * Genre 
+  * Niveau d’éducation 
+  * Intitulé du poste 
 
 Les variables catégorielles ont été transformées à l’aide du **One‑Hot Encoding**.
 
@@ -35,7 +35,7 @@ Les étapes de prétraitement incluent :
 
 1. **Nettoyage**
 
-   * Suppression des lignes contenant des valeurs manquantes.
+   * Remplacement des lignes contenant des valeurs manquantes via `SimpleImputer`.
 
 2. **Encodage des variables catégorielles**
 
